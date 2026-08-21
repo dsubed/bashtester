@@ -1,0 +1,75 @@
+#!/bin/bash
+
+if [ -n "$1" ]; then
+  # run all files named *.test in $path
+  path=$1
+  path=$(realpath "$1")
+  echo "BashTester running tests $path"
+  for test_file in "$path"/*.test; do
+    bash "$test_file"
+  done
+fi
+
+
+
+# Define colors
+BLACK='\033[0;30m'
+LIGHT_BLACK='\033[1;30m'
+RED='\033[0;31m'
+LIGHT_RED='\033[1;31m'
+GREEN='\033[0;32m'
+LIGHT_GREEN='\033[1;32m'
+BROWN_ORANGE='\033[0;33m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+LIGHT_BLUE='\033[1;34m'
+PURPLE='\033[0;35m'
+LIGHT_PURPLE='\033[1;35m'
+CYAN='\033[0;36m'
+LIGHT_CYAN='\033[1;36m'
+LIGHT_GRAY='\033[0;37m'
+WHITE='\033[1;37m'
+NC='\033[0m' # No Color
+
+exit_code=0
+
+assertEqual() {
+  local testname=$1
+  local expected=$2
+  local actual=$3
+  if [ "$expected" != "$actual" ]; then
+    echo -e "${RED}Assertion failed: $testname: expected '$expected', got '$actual'${NC}"
+    exit_code=1
+  else
+    echo -e "${GREEN}Assertion passed: $testname${NC}"
+  fi
+}
+
+assertNotEqual() {
+  local testname=$1
+  local expected=$2
+  local actual=$3
+  if [ "$expected" == "$actual" ]; then
+    echo -e "${RED}Assertion failed: $testname: expected '$expected' to not equal '$actual'${NC}"
+    exit_code=1
+  else
+    echo -e "${GREEN}Assertion passed: $testname${NC}"
+  fi
+}
+
+start_test() {
+  local testName=$1
+  blue_line
+  echo -e "${BLUE}Starting test: $testName${NC}"
+  blue_line
+}
+
+finish_test() {
+  blue_line
+  exit $exit_code
+}
+
+blue_line() {
+  echo -e "${BLUE}--------------------------------------------------------------------------------------------${NC}"
+}
+
