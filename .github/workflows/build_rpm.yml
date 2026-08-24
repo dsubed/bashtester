@@ -55,8 +55,6 @@ jobs:
       - name: Upload RPM artifact
         uses: actions/upload-artifact@v4
         with:
-          env: 
-            VERSION:$(<./version)
-          name: bashtester-rpm-$VERSION
+          name: bashtester-rpm
           path: target/**/*.rpm
           if-no-files-found: error
