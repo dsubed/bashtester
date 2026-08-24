@@ -1,6 +1,6 @@
 Name:       bashtester
 Version:    %{version}
-Release:    %{release}
+Release:    %(echo `date +%Y%m%d%H%M`)
 Summary:    RPM package for %{name}
 License:    mit
 Requires:   bash
