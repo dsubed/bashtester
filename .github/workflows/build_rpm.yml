@@ -1,0 +1,38 @@
+name: RPM Build
+# Controls when the workflow will run
+on:
+  push:
+    branches: [ "release/*" ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+     - uses: actions/checkout@v7
+       with:
+         sparse-checkout: |
+           bashtester
+           bashtester.spec
+
+      # Runs a single command using the runners shell
+      - name: Build RPM Package
+        # uses: dsubed/bashtester@releases/latest
+        env:
+          BUILD_ROOT: ${{ inputs.my_value }}
+        run: |
+          apt-get install rpm
+          mkdir -p rpmbuild/src
+          TOP_DIR=`pwd`/rpmbuild
+          BUILD_ROOT=$TOP_DIR/build
+          
+          mkdir -p $BUILD_ROOT/build
+          cp $GITHUB_WORKSPACE/bashtester $SOURCE_DIR
+          rpmbuild --buildroot `pwd` --define="_topdir $TOP_DIR" --define="_rpmdir $TARGET" --define="version $RPM_VERSION" --define="release $RPM_RELEASE" --noclean -bb ./bashtester.spec 
