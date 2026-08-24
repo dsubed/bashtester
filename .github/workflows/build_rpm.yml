@@ -1,38 +1,72 @@
-name: RPM Build
-# Controls when the workflow will run
-on:
-  push:
-    branches: [ "release/*" ]
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+name: Build RPM
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+      - release/**
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  build-rpm:
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-     - uses: actions/checkout@v7
-       with:
-         sparse-checkout: |
-           bashtester
-           bashtester.spec
+      - name: Checkout package files
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            bashtester
+            bashtester.spec
+          sparse-checkout-cone-mode: false
 
-      # Runs a single command using the runners shell
-      - name: Build RPM Package
-        # uses: dsubed/bashtester@releases/latest
-        env:
-          BUILD_ROOT: ${{ inputs.my_value }}
+      - name: Install RPM tools
         run: |
-          apt-get install rpm
-          mkdir -p rpmbuild/src
-          TOP_DIR=`pwd`/rpmbuild
-          BUILD_ROOT=$TOP_DIR/build
-          
-          mkdir -p $BUILD_ROOT/build
-          cp $GITHUB_WORKSPACE/bashtester $SOURCE_DIR
-          rpmbuild --buildroot `pwd` --define="_topdir $TOP_DIR" --define="_rpmdir $TARGET" --define="version $RPM_VERSION" --define="release $RPM_RELEASE" --noclean -bb ./bashtester.spec 
+          sudo apt-get update
+          sudo apt-get install -y rpm
+
+      - name: Get latest release version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest_tag="$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq '.tagName')"
+          version="${latest_tag#v}"
+
+          if [[ -z "$version" ]]; then
+            echo "Latest release tag did not contain a version" >&2
+            exit 1
+          fi
+
+          echo "RPM_VERSION=$version" >> "$GITHUB_ENV"
+          echo "Using RPM version $version from release $latest_tag"
+
+      - name: Build RPM package
+        run: |
+          top_dir="$GITHUB_WORKSPACE/rpmbuild"
+          source_dir="$top_dir/SOURCES"
+          rpm_dir="$GITHUB_WORKSPACE/target"
+
+          mkdir -p "$source_dir" "$top_dir/BUILD" "$top_dir/BUILDROOT" "$top_dir/SPECS" "$top_dir/SRPMS" "$rpm_dir"
+          install -m 0755 bashtester "$source_dir/bashtester"
+
+          rpmbuild \
+            --define "_topdir $top_dir" \
+            --define "_sourcedir $source_dir" \
+            --define "_rpmdir $rpm_dir" \
+            --define "version $RPM_VERSION" \
+            --noclean \
+            -bb bashtester.spec
+
+      - name: Upload RPM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bashtester-rpm-${{ env.RPM_VERSION }}
+          path: target/**/*.rpm
+          if-no-files-found: error
