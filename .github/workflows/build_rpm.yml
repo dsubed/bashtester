@@ -41,6 +41,7 @@ jobs:
 
           mkdir -p "$source_dir" "$top_dir/BUILD" "$top_dir/BUILDROOT" "$top_dir/SPECS" "$top_dir/SRPMS" "$rpm_dir"
           install -m 0755 bashtester "$source_dir/bashtester"
+          install -m 0755 version "$source_dir/version"
 
           rpmbuild \
             --define "_topdir $top_dir" \
