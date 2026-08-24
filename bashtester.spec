@@ -1,5 +1,5 @@
 Name:       bashtester
-Version:    %{echo `$(<./version)`}
+Version:    %(echo $(<./version))
 Release:    %(echo `date +%Y%m%d%H%M`)
 Summary:    RPM package for %{name}
 License:    mit
