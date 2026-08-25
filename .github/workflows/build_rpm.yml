@@ -21,12 +21,6 @@ jobs:
     steps:
       - name: Checkout package files
         uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            version
-            bashtester
-            bashtester.spec
-          sparse-checkout-cone-mode: false
 
       - name: Install RPM tools
         run: |
