@@ -11,8 +11,7 @@ A minimal test framework for bash scripts
 
 %install
 rm -rf %{buildroot}
-mkdir -p  %{buildroot}/usr/local/bin
-cp %{_sourcedir}/bashtester %{buildroot}/usr/local/bin
+cp %{_sourcedir} %{buildroot}
 
 %clean
 rm -rf %{buildroot}

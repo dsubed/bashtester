@@ -34,27 +34,12 @@ jobs:
           sudo apt-get install -y rpm
 
       - name: Build RPM package
-        run: |
-          top_dir="$GITHUB_WORKSPACE/rpmbuild"
-          source_dir="$top_dir/SOURCES"
-          rpm_dir="$GITHUB_WORKSPACE/target"
-          RPM_VERSION=$(<./version)
-
-          mkdir -p "$source_dir" "$top_dir/BUILD" "$top_dir/BUILDROOT" "$top_dir/SPECS" "$top_dir/SRPMS" "$rpm_dir"
-          install -m 0755 bashtester "$source_dir/bashtester"
-          install -m 0755 version "$source_dir/version"
-
-          rpmbuild \
-            --define "_topdir $top_dir" \
-            --define "_sourcedir $source_dir" \
-            --define "_rpmdir $rpm_dir" \
-            --define "version $RPM_VERSION" \
-            --noclean \
-            -bb bashtester.spec
+        run: ./build.sh
 
       - name: Upload RPM artifact
         uses: actions/upload-artifact@v4
         with:
           name: bashtester-rpm
-          path: target/**/*.rpm
+          path: output/*.rpm
+          archive: false
           if-no-files-found: error
