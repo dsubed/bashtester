@@ -11,7 +11,7 @@ A minimal test framework for bash scripts
 
 %install
 rm -rf %{buildroot}
-cp %{_sourcedir} %{buildroot}
+cp -r %{_sourcedir} %{buildroot}
 
 %clean
 rm -rf %{buildroot}

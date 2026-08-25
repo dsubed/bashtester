@@ -17,7 +17,8 @@ mkdir -p $SOURCE_DIR
 mkdir -p output
 
 #copy the source files to the SOURCES directory
-cp ./src $SOURCE_DIR/
+cp -r ./src $SOURCE_DIR/
 
 rpmbuild --define="_topdir $TOP_DIR" --buildroot $BUILD_ROOT --define="_sourcedir $SOURCE_DIR" --define="_rpmdir $TARGET" --define="version $RPM_VERSION" -bb ./$PROJECT_NAME.spec
-mv $TARGET/*/*.rpm output/
+# move the generated rpm files to the output directory
+find $TARGET -name "*.rpm" -exec mv {} output/ \;
