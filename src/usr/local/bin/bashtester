@@ -1,15 +1,5 @@
 #!/bin/bash
 
-if [ -n "$1" ]; then
-  # run all files named *.test in $path
-  path=$1
-  path=$(realpath "$1")
-  echo "BashTester running tests $path"
-  for test_file in "$path"/*.test; do
-    bash "$test_file"
-  done
-fi
-
 
 
 # Define colors
@@ -66,10 +56,31 @@ start_test() {
 
 finish_test() {
   blue_line
-  exit $exit_code
 }
 
 blue_line() {
   echo -e "${BLUE}--------------------------------------------------------------------------------------------${NC}"
 }
 
+## Run the actual tests.
+
+if [ -n "$1" ]; then
+  # run all files named *.test in $path
+  path=$1
+  path=$(realpath "$1")
+  echo -e "${LIGHT_BLUE}BashTester running tests in: $path${NC}"
+  for test_file in "$path"/*.test; do
+    echo -e "${YELLOW}Running test file: $test_file${NC}"
+    . "$test_file"
+    
+  done
+  cd $(dirname "$SCRIPT_PATH")
+fi
+
+if [ $exit_code -eq 0 ]; then
+  echo -e "${GREEN}All tests passed!${NC}"
+else
+  echo -e "${RED}Some tests failed.${NC}"
+fi
+
+exit $exit_code
