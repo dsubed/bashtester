@@ -23,7 +23,7 @@ NC='\033[0m' # No Color
 
 exit_code=0
 
-assertEqual() {
+assert_equal() {
   local testname=$1
   local expected=$2
   local actual=$3
@@ -35,7 +35,7 @@ assertEqual() {
   fi
 }
 
-assertNotEqual() {
+assert_not_equal() {
   local testname=$1
   local expected=$2
   local actual=$3
@@ -64,18 +64,24 @@ blue_line() {
 
 ## Run the actual tests.
 
+# If no path is provided, use the current directory
+
 if [ -n "$1" ]; then
   # run all files named *.test in $path
   path=$1
-  path=$(realpath "$1")
-  echo -e "${LIGHT_BLUE}BashTester running tests in: $path${NC}"
-  for test_file in "$path"/*.test; do
-    echo -e "${YELLOW}Running test file: $test_file${NC}"
-    . "$test_file"
-    
-  done
-  cd $(dirname "$SCRIPT_PATH")
+else
+  path="."
 fi
+
+path=$(realpath "$path")
+echo -e "${LIGHT_BLUE}BashTester running tests in: $path${NC}"
+for test_file in "$path"/*.test; do
+  echo -e "${YELLOW}Running test file: $test_file${NC}"
+  . "$test_file"
+  
+done
+echo "$SCRIPT_PATH"
+cd $(dirname "$SCRIPT_PATH")
 
 if [ $exit_code -eq 0 ]; then
   echo -e "${GREEN}All tests passed!${NC}"

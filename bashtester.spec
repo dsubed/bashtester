@@ -17,5 +17,5 @@ cp -r %{_sourcedir}/* %{buildroot}
 /usr/local/bin/bashtester
 
 %changelog
-* Wed Aug 19 2026 Linus Larsson linus.larsson@smhi.se
+* Wed Aug 19 2026 Linus Larsson linus.larsson@bahnhof.se
 - First package
