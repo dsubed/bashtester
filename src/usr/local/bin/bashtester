@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 # Define colors
 BLACK='\033[0;30m'
 LIGHT_BLACK='\033[1;30m'
@@ -62,6 +60,19 @@ blue_line() {
   echo -e "${BLUE}--------------------------------------------------------------------------------------------${NC}"
 }
 
+write_line() {
+  color=$1
+  color=$(echo "$color" | tr '[:lower:]' '[:upper:]')
+  echo -e "${!color}--------------------------------------------------------------------------------------------${NC}"
+}
+
+color_block() {
+  color=$1
+  block=$2
+  write_line "$color"
+  echo -e "${!color}$block${NC}"
+  write_line "$color"
+}
 ## Run the actual tests.
 
 # If no path is provided, use the current directory
@@ -75,11 +86,20 @@ fi
 
 path=$(realpath "$path")
 echo -e "${LIGHT_BLUE}BashTester running tests in: $path${NC}"
-for test_file in "$path"/*.test; do
-  echo -e "${YELLOW}Running test file: $test_file${NC}"
-  . "$test_file"
-  
-done
+
+if [ -d "$path" ]; then
+  for test_file in "$path"/*.test; do
+    echo -e "${YELLOW}Running test file: $test_file${NC}"
+    . "$test_file"  
+  done
+elif [ -f "$path" ] && [[ "$path" == *.test ]]; then
+  echo -e "${YELLOW}Running test file: $path${NC}"
+  . "$path"
+else
+  echo -e "${RED}Error: Directory $path does not exist.${NC}"
+  exit 1
+fi
+
 echo "$SCRIPT_PATH"
 cd $(dirname "$SCRIPT_PATH")
 
