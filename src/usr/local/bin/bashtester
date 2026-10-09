@@ -91,22 +91,11 @@ run_test() {
     echo running "$fcn"
       "$fcn"
     fi
-    echo "looping"
   done
   if [[ "$function_list" == *"after_all"* ]]; then
     after_all
   fi
-  echo all tests finished
 }
-
-register_exit_codes() {
-  if [ $1 -ne 0 ]; then
-    echo -e "${RED}Some tests failed.${NC}"
-  else
-    echo -e "${GREEN}All tests passed!${NC}"
-  fi
-}
-
 
 #  Get the list of functions defined in a given bash script file using get_fcn_list function.
 get_fcn_list() {
@@ -153,7 +142,6 @@ else
   exit 1
 fi
 
-echo "$SCRIPT_PATH"
 cd $(dirname "$SCRIPT_PATH")
 
 if [ $exit_code -eq 0 ]; then
