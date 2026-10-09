@@ -1,0 +1,26 @@
+#!/bin/bash
+
+after_all() {
+    echo "after_all"
+}
+
+just_a_placeholder() {
+    echo "just_a_placeholder"
+}
+
+test_example() {   
+    echo "test_example"
+}
+
+before_all() {
+    echo "before_all"
+}
+
+some_function() {
+    echo "some_function"
+}
+
+
+_private_function() {
+    echo "private_function"
+}

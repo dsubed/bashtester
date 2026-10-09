@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+exit_code=0
+
 # Define colors
 BLACK='\033[0;30m'
 LIGHT_BLACK='\033[1;30m'
@@ -19,7 +22,7 @@ LIGHT_GRAY='\033[0;37m'
 WHITE='\033[1;37m'
 NC='\033[0m' # No Color
 
-exit_code=0
+
 
 assert_equal() {
   local testname=$1
@@ -73,6 +76,55 @@ color_block() {
   echo -e "${!color}$block${NC}"
   write_line "$color"
 }
+
+special_functions="before_all after_all"
+
+run_test() {
+  source "$1"
+  function_list=$(get_fcn_list "$1")
+  echo Functions: $function_list
+  if [[ "$function_list" == *"before_all"* ]]; then
+    before_all
+  fi
+  for fcn in $function_list; do
+    if [[ "$special_functions" != *"$fcn"* ]]; then
+    echo running "$fcn"
+      "$fcn"
+    fi
+    echo "looping"
+  done
+  if [[ "$function_list" == *"after_all"* ]]; then
+    after_all
+  fi
+  echo all tests finished
+}
+
+register_exit_codes() {
+  if [ $1 -ne 0 ]; then
+    echo -e "${RED}Some tests failed.${NC}"
+  else
+    echo -e "${GREEN}All tests passed!${NC}"
+  fi
+}
+
+
+#  Get the list of functions defined in a given bash script file using get_fcn_list function.
+get_fcn_list() {
+  env -i bash --noprofile --norc -c '
+    source "'"$1"'"
+    typeset -f |
+    grep '\''^[^{} ].* () $'\'' |
+    awk "{print \$1}" |
+    while read -r fcn_name; do
+        type "$fcn_name" | head -n 1 | grep -q "is a function$" || continue
+        # skip function that starts with _
+        [[ "$fcn_name" == _* ]] && continue
+        echo "$fcn_name"
+    done
+  '
+}
+
+
 ## Run the actual tests.
 
 # If no path is provided, use the current directory
@@ -86,15 +138,16 @@ fi
 
 path=$(realpath "$path")
 echo -e "${LIGHT_BLUE}BashTester running tests in: $path${NC}"
-
+export TEST_PATH="$path"
 if [ -d "$path" ]; then
   for test_file in "$path"/*.test; do
     echo -e "${YELLOW}Running test file: $test_file${NC}"
-    . "$test_file"  
+    run_test "$test_file"
   done
 elif [ -f "$path" ] && [[ "$path" == *.test ]]; then
   echo -e "${YELLOW}Running test file: $path${NC}"
-  . "$path"
+  run_test "$path"
+  echo -e "${YELLOW}Test has been executed.${NC}"
 else
   echo -e "${RED}Error: Directory $path does not exist.${NC}"
   exit 1

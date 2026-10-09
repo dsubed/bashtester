@@ -1,0 +1,10 @@
+
+# a standard test for the bashtester framework
+dummy_test(){
+    result=$(run_test test.dummy)
+    assert_equal "dummy_test result" "before_all
+just_a_placeholder
+some_function
+test_example
+after_all" "$result"
+}
