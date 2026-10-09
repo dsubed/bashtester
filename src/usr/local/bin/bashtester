@@ -1,8 +1,5 @@
 #!/bin/bash
 
-
-exit_code=0
-
 # Define colors
 BLACK='\033[0;30m'
 LIGHT_BLACK='\033[1;30m'
@@ -22,7 +19,14 @@ LIGHT_GRAY='\033[0;37m'
 WHITE='\033[1;37m'
 NC='\033[0m' # No Color
 
+##############
+## help functions
+########
 
+
+failing_test(){
+  faulty_tests+=("${FUNCNAME[2]}")
+}
 
 assert_equal() {
   local testname=$1
@@ -30,6 +34,7 @@ assert_equal() {
   local actual=$3
   if [ "$expected" != "$actual" ]; then
     echo -e "${RED}Assertion failed: $testname: expected '$expected', got '$actual'${NC}"
+    failing_test "$testname"
     exit_code=1
   else
     echo -e "${GREEN}Assertion passed: $testname${NC}"
@@ -42,31 +47,18 @@ assert_not_equal() {
   local actual=$3
   if [ "$expected" == "$actual" ]; then
     echo -e "${RED}Assertion failed: $testname: expected '$expected' to not equal '$actual'${NC}"
-    exit_code=1
+    failing_test "$testname"
+    exit_code=1 
   else
     echo -e "${GREEN}Assertion passed: $testname${NC}"
   fi
 }
 
-start_test() {
-  local testName=$1
-  blue_line
-  echo -e "${BLUE}Starting test: $testName${NC}"
-  blue_line
-}
-
-finish_test() {
-  blue_line
-}
-
-blue_line() {
-  echo -e "${BLUE}--------------------------------------------------------------------------------------------${NC}"
-}
-
-write_line() {
-  color=$1
-  color=$(echo "$color" | tr '[:lower:]' '[:upper:]')
-  echo -e "${!color}--------------------------------------------------------------------------------------------${NC}"
+check_last_command(){
+  last_command_exit=$?
+  local expected_exit=$1
+  function_name=${FUNCNAME[1]}
+  assert_equal "Check command in: $function_name" "$expected_exit" "$last_command_exit"
 }
 
 color_block() {
@@ -77,19 +69,29 @@ color_block() {
   write_line "$color"
 }
 
+write_line() {
+  color=$1
+  color=$(echo "$color" | tr '[:lower:]' '[:upper:]')
+  echo -e "${!color}--------------------------------------------------------------------------------------------${NC}"
+}
+
+#########################
+## Internal functions
+###########################
+
 special_functions="before_all after_all"
 
-run_test() {
+run_tests() {
   source "$1"
   function_list=$(get_fcn_list "$1")
-  echo Functions: $function_list
   if [[ "$function_list" == *"before_all"* ]]; then
     before_all
   fi
   for fcn in $function_list; do
     if [[ "$special_functions" != *"$fcn"* ]]; then
-    echo running "$fcn"
-      "$fcn"
+      color_block blue "Starting test: \"$fcn\" in $1"
+      $fcn
+      color_block blue "Finished test: \"$fcn\" in $1"
     fi
   done
   if [[ "$function_list" == *"after_all"* ]]; then
@@ -113,11 +115,12 @@ get_fcn_list() {
   '
 }
 
-
+#########################
 ## Run the actual tests.
+#########################
+
 
 # If no path is provided, use the current directory
-
 if [ -n "$1" ]; then
   # run all files named *.test in $path
   path=$1
@@ -128,26 +131,39 @@ fi
 path=$(realpath "$path")
 echo -e "${LIGHT_BLUE}BashTester running tests in: $path${NC}"
 export TEST_PATH="$path"
+
+## Stat variables
+exit_code=0
+number_of_tests=0
+test_files=()
+faulty_tests=()
+
+
 if [ -d "$path" ]; then
   for test_file in "$path"/*.test; do
+    test_files+=($(basename "$test_file"))
     echo -e "${YELLOW}Running test file: $test_file${NC}"
-    run_test "$test_file"
+    run_tests "$test_file"
+    echo -e "${YELLOW}Test file $test_file has been executed.${NC}"
   done
 elif [ -f "$path" ] && [[ "$path" == *.test ]]; then
   echo -e "${YELLOW}Running test file: $path${NC}"
-  run_test "$path"
-  echo -e "${YELLOW}Test has been executed.${NC}"
+  test_files+=($(basename "$path"))
+  run_tests "$path"
+  echo -e "${YELLOW}Test file $path has been executed.${NC}"
 else
   echo -e "${RED}Error: Directory $path does not exist.${NC}"
   exit 1
 fi
 
-cd $(dirname "$SCRIPT_PATH")
+cd $(dirname "$0")
 
+  echo -e "${GREEN}Test files executed: ${test_files[@]}${NC}"
 if [ $exit_code -eq 0 ]; then
   echo -e "${GREEN}All tests passed!${NC}"
 else
   echo -e "${RED}Some tests failed.${NC}"
+  echo -e "${RED}Faulty tests: ${faulty_tests[@]}${NC}"
 fi
 
 exit $exit_code
